@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#07111b">
+    <meta name="description" content="City Pulse disaster intelligence dashboard for exploring fire detections, weather conditions, and nearby incident data.">
+    <title>City Pulse | Disaster Intelligence</title>
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://tile.openstreetmap.org">
+    <link rel="preconnect" href="https://geocoding-api.open-meteo.com">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="City Pulse home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-opacity=".35"/>
+              <circle cx="16" cy="16" r="8" stroke="currentColor" stroke-opacity=".6"/>
+              <path d="M3 16h7l3-6 4 12 3-6h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="brand-copy"><strong>CITY PULSE</strong><small>DISASTER INTELLIGENCE</small></span>
+        </a>
+
+        <div class="location-control">
+          <span class="field-label">MONITORING</span>
+          <label class="search-wrap" for="location-search">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="location-search" type="search" placeholder="Search a city or place" autocomplete="off" aria-label="Search a city or place">
+            <span id="location-name" class="location-name">New Delhi, India</span>
+          </label>
+          <div id="location-suggestions" class="suggestions" role="listbox" aria-label="Location suggestions" hidden></div>
+          <button id="geolocate-button" class="icon-button location-button" type="button" aria-label="Use my current location" title="Use my current location">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5"/><path d="M10 1.5v3M10 15.5v3M1.5 10h3m11 0h3"/><circle cx="10" cy="10" r="1.5"/></svg>
+          </button>
+        </div>
+
+        <div class="date-control">
+          <span class="field-label">DATE</span>
+          <div class="date-input-wrap">
+            <button id="previous-day" class="icon-button" type="button" aria-label="Previous day">‹</button>
+            <label class="date-label" for="date-picker">
+              <span id="date-display">—</span>
+              <input id="date-picker" type="date" aria-label="Select date">
+            </label>
+            <button id="next-day" class="icon-button" type="button" aria-label="Next day">›</button>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <span id="connection-status" class="connection-status"><i></i><span>DEMO DATA</span></span>
+          <div class="profile-wrap">
+            <button id="profile-button" class="profile-button" type="button" aria-expanded="false" aria-haspopup="true" aria-label="Open information menu">CP</button>
+            <div id="profile-menu" class="profile-menu" hidden>
+              <strong>City Pulse</strong>
+              <p>Emergency awareness dashboard</p>
+              <span>Data is informational, not an official warning service.</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-heading">
+          <div>
+            <p class="eyebrow"><span class="pulse-dot"></span> GLOBAL SITUATIONAL AWARENESS</p>
+            <h1>Incident overview</h1>
+            <p id="data-caption" class="heading-subtitle">A sample dataset for interface testing — not live incident reports.</p>
+          </div>
+          <div class="mode-switch" role="tablist" aria-label="Monitoring mode">
+            <button id="all-mode" class="mode-button active" type="button" role="tab" aria-selected="true">Overview</button>
+            <button id="fire-mode" class="mode-button" type="button" role="tab" aria-selected="false"><span class="mode-icon fire-icon" aria-hidden="true">◆</span> Fire</button>
+            <button id="weather-mode" class="mode-button" type="button" role="tab" aria-selected="false"><span class="mode-icon weather-icon" aria-hidden="true">◌</span> Weather</button>
+          </div>
+        </section>
+
+        <section class="metrics-grid" aria-label="Incident summary">
+          <article class="metric-card">
+            <div class="metric-top"><span class="metric-icon fire-icon">◆</span><span class="metric-label">FIRE DETECTIONS</span><span class="metric-trend">DEMO</span></div>
+            <strong id="fire-count" class="metric-value">—</strong>
+            <span class="metric-foot">Satellite observations ≠ confirmed fires</span>
+          </article>
+          <article class="metric-card">
+            <div class="metric-top"><span class="metric-icon weather-icon">◌</span><span class="metric-label">WEATHER ALERTS</span><span class="metric-trend neutral">SOURCE-LIMITED</span></div>
+            <strong id="weather-alert-count" class="metric-value">—</strong>
+            <span class="metric-foot">No official alert feed connected</span>
+          </article>
+          <article class="metric-card">
+            <div class="metric-top"><span class="metric-icon risk-icon">△</span><span id="high-priority-label" class="metric-label">HIGH PRIORITY</span><span class="metric-trend">DATA-BASED</span></div>
+            <strong id="high-count" class="metric-value">—</strong>
+            <span class="metric-foot">Priority labels are not official risk ratings</span>
+          </article>
+          <article class="metric-card">
+            <div class="metric-top"><span class="metric-icon nearby-icon">◎</span><span class="metric-label">WITHIN <span id="metric-radius">10</span> KM</span><span class="metric-trend neutral">SELECTED AREA</span></div>
+            <strong id="nearby-count" class="metric-value">—</strong>
+            <span class="metric-foot">Based on selected location coordinates</span>
+          </article>
+        </section>
+
+        <section class="workspace-grid">
+          <section class="map-panel panel" aria-label="Interactive incident map">
+            <div class="panel-heading map-heading">
+              <div><p class="eyebrow">LIVE MAP VIEW</p><h2>Global activity</h2></div>
+              <div class="map-heading-actions">
+                <label class="compact-select-label" for="radius-select">Radius</label>
+                <select id="radius-select" aria-label="Nearby search radius">
+                  <option value="10" selected>10 km</option>
+                  <option value="25">25 km</option>
+                  <option value="50">50 km</option>
+                  <option value="100">100 km</option>
+                </select>
+                <button id="retry-button" class="retry-button" type="button" hidden>Retry</button>
+              </div>
+            </div>
+            <div class="map-toolbar">
+              <label class="filter-label" for="type-filter">Type</label>
+              <select id="type-filter" aria-label="Filter by incident type">
+                <option value="all">All types</option>
+                <option value="fire">Fire detections</option>
+                <option value="weather">Weather alerts</option>
+                <option value="flood">Flood reports</option>
+              </select>
+              <label class="filter-label" for="severity-filter">Priority</label>
+              <select id="severity-filter" aria-label="Filter by priority">
+                <option value="all">All priorities</option>
+                <option value="high">High</option>
+                <option value="moderate">Moderate</option>
+                <option value="low">Low</option>
+              </select>
+              <label class="nearby-toggle"><input id="nearby-only" type="checkbox"><span>Nearby only</span></label>
+              <span id="result-count" class="result-count">Loading map…</span>
+            </div>
+            <div id="map" class="map-canvas" role="application" aria-label="Map showing incident locations"></div>
+            <div class="map-footer">
+              <div class="legend" aria-label="Map legend">
+                <span><i class="legend-dot high"></i><span id="legend-high-label">High priority</span></span>
+                <span><i class="legend-dot moderate"></i><span id="legend-moderate-label">Moderate</span></span>
+                <span><i class="legend-dot low"></i><span id="legend-low-label">Low</span></span>
+                <span><i class="legend-dot nearby"></i>Within selected radius</span>
+                <span><i class="legend-dot selected"></i>Selected location</span>
+              </div>
+              <span id="map-attribution-note">Priorities are dataset labels, not official safety zones.</span>
+            </div>
+          </section>
+
+          <aside class="side-column">
+            <section id="weather-card" class="weather-card panel" aria-labelledby="weather-title">
+              <div class="panel-heading compact-heading">
+                <div><p class="eyebrow">LOCAL CONDITIONS</p><h2 id="weather-title">Weather snapshot</h2></div>
+                <a id="weather-source-badge" class="source-badge" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">CONNECTING</a>
+              </div>
+              <div id="weather-content" class="weather-content" aria-live="polite">
+                <div class="weather-loading"><span class="spinner"></span><span>Loading weather…</span></div>
+              </div>
+              <p id="weather-note" class="weather-note">Modelled weather information is not an official alert.</p>
+            </section>
+
+            <section class="detail-panel panel" aria-labelledby="detail-heading">
+              <div class="panel-heading compact-heading">
+                <div><p class="eyebrow">INCIDENT INTELLIGENCE</p><h2 id="detail-heading">Selected incident</h2></div>
+                <button id="close-detail" class="icon-button close-detail" type="button" aria-label="Clear selected incident" title="Clear selection">×</button>
+              </div>
+              <div id="incident-detail" class="incident-detail">
+                <div class="empty-detail"><span class="empty-crosshair">◎</span><strong>Nothing selected</strong><span>Select a map marker or timeline item to inspect its data.</span></div>
+              </div>
+            </section>
+
+            <section class="nearby-panel panel" aria-labelledby="nearby-heading">
+              <div class="panel-heading compact-heading">
+                <div><p class="eyebrow">PROXIMITY</p><h2 id="nearby-heading">Nearby incidents</h2></div>
+                <span id="nearby-badge" class="count-badge">0</span>
+              </div>
+              <div id="nearby-list" class="nearby-list"><p class="empty-list">No nearby records for this date.</p></div>
+            </section>
+          </aside>
+        </section>
+
+        <section class="timeline-panel panel" aria-labelledby="timeline-heading">
+          <div class="panel-heading timeline-heading">
+            <div><p class="eyebrow">CHRONOLOGICAL FEED</p><h2 id="timeline-heading">Incident timeline</h2></div>
+            <span id="timeline-date" class="timeline-date">—</span>
+          </div>
+          <div id="timeline" class="timeline-list" aria-live="polite">
+            <p class="empty-list">Loading incident records…</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="disclaimer">
+        <span><b>Important:</b> City Pulse is an informational prototype. It is not an emergency service and does not provide authoritative safety guidance.</span>
+        <span id="data-updated">Data source status: initializing</span>
+      </footer>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
