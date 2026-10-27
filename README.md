@@ -4,13 +4,13 @@ City Pulse is a static, responsive disaster-intelligence dashboard prototype. It
 
 ## Run locally
 
-Serve this folder over HTTP rather than opening `index.html` directly, since browser geolocation and API requests require a local web origin. For example, with Python installed:
+Run the backend from this folder. It serves the dashboard and the same-origin API:
 
 ```powershell
-py -m http.server 8000
+npm start
 ```
 
-Then open `http://localhost:8000`. The map tiles, weather, and place search require internet access.
+Open `http://127.0.0.1:8000`. Node.js 18 or newer is required. No package installation is needed.
 
 ## Data sources and configuration
 
@@ -18,7 +18,7 @@ Then open `http://localhost:8000`. The map tiles, weather, and place search requ
 - **Weather:** Open-Meteo's public forecast and historical archive endpoints provide modelled temperature, humidity, precipitation, wind, and weather codes. The forecast supports dates up to 16 days ahead; historical coverage and availability depend on the requested date and model. The public free API is for non-commercial use, subject to its published request limits and CC-BY 4.0 attribution terms. The dashboard links to Open-Meteo in the weather panel and does not claim that these are official warnings. Check the provider's current terms before deployment.
 - **Location search:** Open-Meteo geocoding is used for city/place search; no API key is needed.
 - **Map:** Leaflet 1.9.4 and MarkerCluster 1.5.3 are loaded from their public CDNs. OpenStreetMap tiles are styled with a CSS dark filter and attributed on the map.
-- **NASA FIRMS:** Fire observations can be enabled by setting `window.CITY_PULSE_CONFIG.firmsProxyUrl` to a same-origin backend endpoint before `script.js` loads. For example, add this before the script include:
+- **NASA FIRMS:** The backend exposes `GET /api/firms?date=YYYY-MM-DD` and requests one day of VIIRS Suomi-NPP standard-processing observations from the NASA FIRMS Area API. Set the server environment variable `FIRMS_MAP_KEY` before starting the backend. The key is never sent to or stored in browser code. For example, configure the frontend to use the same-origin route before `script.js` loads:
 
   ```html
   <script>
@@ -26,10 +26,18 @@ Then open `http://localhost:8000`. The map tiles, weather, and place search requ
   </script>
   ```
 
-  The backend should accept a `date=YYYY-MM-DD` query parameter and return the NASA FIRMS Area API CSV response for that date. The adapter expects the API's standard CSV header with `latitude`, `longitude`, `acq_date`, `acq_time`, `satellite`, and `confidence` fields. FIRMS requires a free MAP_KEY; keep it on the server and never put it in browser code or local storage. The Area API supports one-to-five-day requests and product-specific historical/NRT availability. A backend proxy is not included in this static frontend. NASA FIRMS satellite detections are not confirmation of structural fires.
+  The backend validates the date and forwards valid CSV and provider error statuses. An absent key produces a configuration error; provider failures never create substitute records. The frontend adapter expects the CSV columns `latitude`, `longitude`, `acq_date`, `acq_time`, `satellite`, and `confidence`. NASA FIRMS requires a free MAP_KEY; keep it on the server and never put it in browser code or local storage. Satellite detections are not confirmation of structural fires.
 
 An unconfigured or failed live incident provider never falls back to demo data. Incident severity labels in the demo are illustrative only; NASA detections are labeled by the provider's confidence field, not by an official danger classification.
 
-## Backend integration
+## Backend and future data sources
 
-Implement an authenticated, rate-limited same-origin route such as `/api/firms` that validates dates, calls the documented NASA FIRMS Area API with a server-side MAP_KEY, and forwards CSV and provider errors without inventing records. Configure official weather-alert sources separately if authoritative alerts are needed; Open-Meteo model fields are not an alert feed.
+The backend uses a small route registry so additional provider routes (for example `/api/weather` or `/api/alerts`) can be added independently. They are not implemented yet. Configure official weather-alert sources separately if authoritative alerts are needed; Open-Meteo model fields are not an alert feed.
+
+This first backend milestone is for local development: it has no authentication or rate limiting and listens on loopback by default. Do not expose it publicly until those protections are added.
+
+Run the automated backend tests with:
+
+```powershell
+npm test
+```
