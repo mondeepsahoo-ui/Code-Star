@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#07111b">
+    <meta name="theme-color" content="#e7e7e7">
     <meta name="description" content="City Pulse disaster intelligence dashboard for exploring fire detections, weather conditions, and nearby incident data.">
     <title>City Pulse | Disaster Intelligence</title>
     <link rel="preconnect" href="https://unpkg.com">
@@ -46,7 +46,7 @@
           <div class="date-input-wrap">
             <button id="previous-day" class="icon-button" type="button" aria-label="Previous day">‹</button>
             <label class="date-label" for="date-picker">
-              <span id="date-display">—</span>
+              <span id="date-display">Today</span>
               <input id="date-picker" type="date" aria-label="Select date">
             </label>
             <button id="next-day" class="icon-button" type="button" aria-label="Next day">›</button>
@@ -55,14 +55,6 @@
 
         <div class="topbar-right">
           <span id="connection-status" class="connection-status"><i></i><span>DEMO DATA</span></span>
-          <div class="profile-wrap">
-            <button id="profile-button" class="profile-button" type="button" aria-expanded="false" aria-haspopup="true" aria-label="Open information menu">CP</button>
-            <div id="profile-menu" class="profile-menu" hidden>
-              <strong>City Pulse</strong>
-              <p>Emergency awareness dashboard</p>
-              <span>Data is informational, not an official warning service.</span>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -108,13 +100,6 @@
             <div class="panel-heading map-heading">
               <div><p class="eyebrow">LIVE MAP VIEW</p><h2>Global activity</h2></div>
               <div class="map-heading-actions">
-                <label class="compact-select-label" for="radius-select">Radius</label>
-                <select id="radius-select" aria-label="Nearby search radius">
-                  <option value="10" selected>10 km</option>
-                  <option value="25">25 km</option>
-                  <option value="50">50 km</option>
-                  <option value="100">100 km</option>
-                </select>
                 <button id="retry-button" class="retry-button" type="button" hidden>Retry</button>
               </div>
             </div>
@@ -133,10 +118,27 @@
                 <option value="moderate">Moderate</option>
                 <option value="low">Low</option>
               </select>
-              <label class="nearby-toggle"><input id="nearby-only" type="checkbox"><span>Nearby only</span></label>
               <span id="result-count" class="result-count">Loading map…</span>
             </div>
             <div id="map" class="map-canvas" role="application" aria-label="Map showing incident locations"></div>
+            <div class="map-popover settings-popover" id="settings-popover" hidden>
+              <strong>Map settings</strong>
+              <label class="popover-setting" for="radius-select">Nearby search radius
+                <select id="radius-select" aria-label="Nearby search radius">
+                  <option value="10" selected>10 km</option>
+                  <option value="25">25 km</option>
+                  <option value="50">50 km</option>
+                  <option value="100">100 km</option>
+                </select>
+              </label>
+              <label class="nearby-toggle"><input id="nearby-only" type="checkbox"><span>Show nearby incidents only</span></label>
+              <p>Distance uses a straight-line estimate, not an official hazard boundary.</p>
+            </div>
+            <div class="map-popover more-popover" id="more-popover" hidden>
+              <button type="button" data-more-action="overview">Overview</button>
+              <button type="button" data-more-action="timeline">Incident timeline</button>
+              <button type="button" data-more-action="data">About data sources</button>
+            </div>
             <div class="map-footer">
               <div class="legend" aria-label="Map legend">
                 <span><i class="legend-dot high"></i><span id="legend-high-label">High priority</span></span>
@@ -150,6 +152,14 @@
           </section>
 
           <aside class="side-column">
+            <section id="location-summary" class="location-summary panel" aria-labelledby="selected-location-title" hidden>
+              <div class="panel-heading compact-heading">
+                <div><p class="eyebrow">SELECTED AREA</p><h2 id="selected-location-title">—</h2></div>
+                <span class="count-badge">ACTIVE</span>
+              </div>
+              <p id="selected-location-coordinates" class="location-coordinates">—</p>
+              <p class="location-summary-note">Weather and nearby records update for this selected location.</p>
+            </section>
             <section id="weather-card" class="weather-card panel" aria-labelledby="weather-title">
               <div class="panel-heading compact-heading">
                 <div><p class="eyebrow">LOCAL CONDITIONS</p><h2 id="weather-title">Weather snapshot</h2></div>
@@ -179,6 +189,20 @@
               <div id="nearby-list" class="nearby-list"><p class="empty-list">No nearby records for this date.</p></div>
             </section>
           </aside>
+          <nav class="tool-rail" aria-label="Dashboard tools">
+            <div class="rail-popover-wrap">
+              <button id="profile-button" class="rail-button profile-button" type="button" aria-expanded="false" aria-haspopup="true" aria-label="Profile and information" title="Profile">CP</button>
+              <div id="profile-menu" class="profile-menu rail-menu" hidden>
+                <strong>City Pulse</strong>
+                <p>Emergency awareness dashboard</p>
+                <span>Informational only — not an official warning service.</span>
+              </div>
+            </div>
+            <button id="rail-weather" class="rail-button" type="button" aria-label="Weather mode" title="Weather"><span aria-hidden="true">☁</span><small>Weather</small></button>
+            <button id="rail-fire" class="rail-button" type="button" aria-label="Fire mode" title="Fire"><span aria-hidden="true">◆</span><small>Fire</small></button>
+            <button id="rail-settings" class="rail-button" type="button" aria-expanded="false" aria-controls="settings-popover" aria-label="Map settings" title="Settings"><span aria-hidden="true">⚙</span><small>Settings</small></button>
+            <button id="rail-more" class="rail-button" type="button" aria-expanded="false" aria-controls="more-popover" aria-label="More dashboard options" title="More"><span aria-hidden="true">···</span><small>More</small></button>
+          </nav>
         </section>
 
         <section class="timeline-panel panel" aria-labelledby="timeline-heading">

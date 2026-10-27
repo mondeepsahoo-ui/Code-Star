@@ -5,9 +5,11 @@
   const DEFAULT_LOCATION = { name: "New Delhi, India", latitude: 28.6139, longitude: 77.209, country: "India" };
   const today = new Date();
   const todayIso = formatDateInput(today);
+  const savedLocation = readStoredLocation();
   const state = {
-    date: DEMO_DATE,
-    location: readStoredLocation() || DEFAULT_LOCATION,
+    date: todayIso,
+    location: savedLocation || DEFAULT_LOCATION,
+    hasSelectedLocation: Boolean(savedLocation),
     mode: "all",
     typeFilter: "all",
     severityFilter: "all",
@@ -69,7 +71,12 @@
     fireMode: $("#fire-mode"),
     weatherMode: $("#weather-mode"),
     profileButton: $("#profile-button"),
-    profileMenu: $("#profile-menu")
+    profileMenu: $("#profile-menu"),
+    locationSummary: $("#location-summary"),
+    settingsPopover: $("#settings-popover"),
+    morePopover: $("#more-popover"),
+    settingsButton: $("#rail-settings"),
+    moreButton: $("#rail-more")
   };
 
   function formatDateInput(date) {
@@ -325,6 +332,10 @@
   function renderAll() {
     state.nearbyIncidents = filterNearbyIncidents(state.incidents, state.location, state.radiusKm);
     state.visibleIncidents = getVisibleIncidents();
+    els.locationSummary.hidden = !state.hasSelectedLocation;
+    $("#selected-location-title").textContent = state.location.name;
+    $("#selected-location-coordinates").textContent = `${state.location.latitude.toFixed(4)}, ${state.location.longitude.toFixed(4)}`;
+    document.querySelector(".nearby-panel").hidden = !state.hasSelectedLocation;
     if (state.selectedIncidentId && !state.visibleIncidents.some((incident) => incident.id === state.selectedIncidentId)) {
       state.selectedIncidentId = null;
       renderIncidentDetails(null);
@@ -439,8 +450,10 @@
       } else {
         state.incidents = demoIncidentsForDate(date);
         setIncidentSourceLabels(false);
-        showConnectionStatus("DEMO DATA", "is-demo");
-        $("#data-caption").textContent = date === DEMO_DATE ? "Historical demo records for interface testing — not live incident reports." : "No incident provider is configured. Demo records are only available for 14 May 2025.";
+        showConnectionStatus(date === DEMO_DATE ? "DEMO DATA" : "NO LIVE FEED", "is-demo");
+        $("#data-caption").textContent = date === DEMO_DATE
+          ? "Historical demo records for interface testing — not live incident reports."
+          : "No incident provider is configured. Demo records are only available for 14 May 2025.";
         $("#map-attribution-note").textContent = "Sample priorities are demo-only and are not official safety zones.";
         $("#data-updated").textContent = "Incident source: labeled demo dataset; no live feed configured";
       }
@@ -576,6 +589,7 @@
       longitude: Number(location.longitude),
       country: location.country || ""
     };
+    state.hasSelectedLocation = true;
     storeLocation(state.location);
     els.locationName.textContent = state.location.name;
     els.locationSearch.value = "";
@@ -658,7 +672,7 @@
   }
 
   function maxDateForMode() {
-    return state.mode === "weather" ? formatDateInput(addDays(todayDate, 15)) : formatDateInput(todayDate);
+    return todayIso;
   }
 
   function updateDateControls() {
@@ -673,7 +687,7 @@
   async function handleDateChange(date) {
     if (!date) return;
     if (date > maxDateForMode()) {
-      toast(state.mode === "weather" ? "Weather forecast dates are limited to 16 days ahead." : "Incident monitoring only supports dates up to today.", true);
+      toast("Future dates are unavailable. Select today or an earlier date.", true);
       updateDateControls();
       return;
     }
@@ -698,6 +712,10 @@
       button.setAttribute("aria-selected", String(key === mode));
       button.dataset.mode = key;
     });
+    $("#rail-weather").classList.toggle("active", mode === "weather");
+    $("#rail-fire").classList.toggle("active", mode === "fire");
+    $("#rail-weather").setAttribute("aria-pressed", String(mode === "weather"));
+    $("#rail-fire").setAttribute("aria-pressed", String(mode === "fire"));
     if (state.map) setTimeout(() => state.map.invalidateSize(), 100);
     updateDateControls();
     renderAll();
@@ -707,6 +725,17 @@
     } else if (mode === "weather") {
       toast("Weather mode shows Open-Meteo model data; it does not provide official warnings.");
     }
+
+  }
+
+  function togglePopover(popover, button) {
+    const opening = popover.hidden;
+    els.settingsPopover.hidden = true;
+    els.morePopover.hidden = true;
+    els.settingsButton.setAttribute("aria-expanded", "false");
+    els.moreButton.setAttribute("aria-expanded", "false");
+    popover.hidden = !opening;
+    button.setAttribute("aria-expanded", String(opening));
   }
 
   function initializeApp() {
@@ -739,6 +768,13 @@
     });
     els.retryButton.addEventListener("click", () => loadIncidents(state.date));
     $("#geolocate-button").addEventListener("click", requestUserLocation);
+    $("#rail-weather").addEventListener("click", () => {
+      setMonitoringMode("weather");
+      $("#weather-card").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    $("#rail-fire").addEventListener("click", () => setMonitoringMode(state.mode === "fire" ? "all" : "fire"));
+    els.settingsButton.addEventListener("click", () => togglePopover(els.settingsPopover, els.settingsButton));
+    els.moreButton.addEventListener("click", () => togglePopover(els.morePopover, els.moreButton));
     els.locationSearch.addEventListener("input", () => {
       clearTimeout(state.searchTimer);
       state.searchTimer = setTimeout(handleLocationSearch, 300);
@@ -766,9 +802,17 @@
     });
     document.addEventListener("click", (event) => {
       if (!event.target.closest(".location-control")) els.suggestions.hidden = true;
-      if (!event.target.closest(".profile-wrap")) {
+      if (!event.target.closest(".rail-popover-wrap")) {
         els.profileMenu.hidden = true;
         els.profileButton.setAttribute("aria-expanded", "false");
+      }
+      if (!event.target.closest(".tool-rail") && !event.target.closest(".settings-popover")) {
+        els.settingsPopover.hidden = true;
+        els.settingsButton.setAttribute("aria-expanded", "false");
+      }
+      if (!event.target.closest(".tool-rail") && !event.target.closest(".more-popover")) {
+        els.morePopover.hidden = true;
+        els.moreButton.setAttribute("aria-expanded", "false");
       }
       const incidentButton = event.target.closest("[data-incident-id]");
       if (incidentButton) selectIncident(incidentButton.dataset.incidentId, true);
@@ -776,6 +820,19 @@
       if (centerButton) selectIncident(centerButton.dataset.centerIncident, true);
       if (event.target.closest("[data-retry]")) loadIncidents(state.date);
       if (event.target.closest("[data-weather-retry]")) loadWeather(state.date, state.location);
+      const moreAction = event.target.closest("[data-more-action]");
+      if (moreAction) {
+        els.morePopover.hidden = true;
+        els.moreButton.setAttribute("aria-expanded", "false");
+        if (moreAction.dataset.moreAction === "overview") {
+          setMonitoringMode("all");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (moreAction.dataset.moreAction === "timeline") {
+          $("#timeline-heading").scrollIntoView({ behavior: "smooth", block: "center" });
+        } else if (moreAction.dataset.moreAction === "data") {
+          toast("Incident records are demo-only unless a NASA FIRMS proxy is configured. Weather is from Open-Meteo, not an official alert feed.");
+        }
+      }
     });
     els.profileButton.addEventListener("click", () => {
       const opening = els.profileMenu.hidden;
