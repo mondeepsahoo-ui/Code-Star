@@ -47,6 +47,7 @@
             <button id="previous-day" class="icon-button" type="button" aria-label="Previous day">‹</button>
             <label class="date-label" for="date-picker">
               <span id="date-display">Today</span>
+              <svg class="date-calendar-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="15" height="13" rx="2"/><path d="M6 2.5v3M14 2.5v3M2.5 8h15"/></svg>
               <input id="date-picker" type="date" aria-label="Select date">
             </label>
             <button id="next-day" class="icon-button" type="button" aria-label="Next day">›</button>
@@ -160,7 +161,7 @@
               <p id="selected-location-coordinates" class="location-coordinates">—</p>
               <p class="location-summary-note">Weather and nearby records update for this selected location.</p>
             </section>
-            <section id="weather-card" class="weather-card panel" aria-labelledby="weather-title">
+            <section id="weather-card" class="weather-card panel" aria-labelledby="weather-title" hidden>
               <div class="panel-heading compact-heading">
                 <div><p class="eyebrow">LOCAL CONDITIONS</p><h2 id="weather-title">Weather snapshot</h2></div>
                 <a id="weather-source-badge" class="source-badge" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">CONNECTING</a>
@@ -169,6 +170,18 @@
                 <div class="weather-loading"><span class="spinner"></span><span>Loading weather…</span></div>
               </div>
               <p id="weather-note" class="weather-note">Modelled weather information is not an official alert.</p>
+            </section>
+
+            <section id="fire-image-card" class="fire-image-card panel" aria-labelledby="fire-image-title" hidden>
+              <div class="panel-heading compact-heading">
+                <div><p class="eyebrow">FIRE MONITORING</p><h2 id="fire-image-title">Wildfire imagery</h2></div>
+                <span class="source-badge">NASA</span>
+              </div>
+              <figure class="fire-image-figure">
+                <img id="fire-image" alt="" loading="lazy">
+                <figcaption><span id="fire-image-caption"></span><a id="fire-image-source" href="https://images.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA image</a></figcaption>
+              </figure>
+              <p class="fire-image-note">Illustrative satellite imagery—not a live fire report or alert.</p>
             </section>
 
             <section class="detail-panel panel" aria-labelledby="detail-heading">

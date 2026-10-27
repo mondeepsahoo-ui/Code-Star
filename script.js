@@ -27,7 +27,8 @@
     weatherController: null,
     loadController: null,
     toastTimer: null,
-    weather: null
+    weather: null,
+    fireImageIndex: null
   };
   const todayDate = new Date(`${todayIso}T12:00:00`);
 
@@ -40,6 +41,11 @@
     { id: "DEMO-L001", type: "flood", severity: "moderate", latitude: 27.1767, longitude: 78.0081, location: "Agra sample", time: "15:40", status: "Demo only — not a report", description: "Fictional flood report included to demonstrate incident type filters.", source: "City Pulse demo dataset", demo: true },
     { id: "DEMO-F004", type: "fire", severity: "high", latitude: 26.9124, longitude: 75.7873, location: "Jaipur sample", time: "17:18", status: "Demo observation", description: "Sample satellite fire detection for testing. This record is not a confirmed incident.", source: "City Pulse demo dataset", demo: true },
     { id: "DEMO-W003", type: "weather", severity: "low", latitude: 30.3165, longitude: 78.0322, location: "Dehradun sample", time: "19:02", status: "Demo only — not an alert", description: "Fictional weather monitoring sample. It is not an official warning.", source: "City Pulse demo dataset", demo: true }
+  ];
+  const fireImages = [
+    { id: "iss071e462173", title: "Wildfires in northern California", url: "https://images-assets.nasa.gov/image/iss071e462173/iss071e462173~medium.jpg" },
+    { id: "PIA22490", title: "ECOSTRESS detects wildfires in the western United States", url: "https://images-assets.nasa.gov/image/PIA22490/PIA22490~small.jpg" },
+    { id: "PIA11092", title: "Arizona forest fire", url: "https://images-assets.nasa.gov/image/PIA11092/PIA11092~small.jpg" }
   ];
 
   const $ = (selector) => document.querySelector(selector);
@@ -59,6 +65,11 @@
     weatherContent: $("#weather-content"),
     weatherSourceBadge: $("#weather-source-badge"),
     weatherNote: $("#weather-note"),
+    weatherCard: $("#weather-card"),
+    fireImageCard: $("#fire-image-card"),
+    fireImage: $("#fire-image"),
+    fireImageCaption: $("#fire-image-caption"),
+    fireImageSource: $("#fire-image-source"),
     incidentDetail: $("#incident-detail"),
     nearbyList: $("#nearby-list"),
     nearbyBadge: $("#nearby-badge"),
@@ -582,6 +593,16 @@
     els.weatherNote.textContent = `${isForecast ? "Forecast" : "Historical model data"} · ${state.location.name}. Not an official weather alert.`;
   }
 
+  function renderFireImage() {
+    const choices = fireImages.map((image, index) => ({ image, index })).filter(({ index }) => index !== state.fireImageIndex);
+    const selected = choices[Math.floor(Math.random() * choices.length)];
+    state.fireImageIndex = selected.index;
+    els.fireImage.src = selected.image.url;
+    els.fireImage.alt = selected.image.title;
+    els.fireImageCaption.textContent = selected.image.title;
+    els.fireImageSource.href = `https://images.nasa.gov/details/${selected.image.id}`;
+  }
+
   function setSelectedLocation(location) {
     state.location = {
       name: location.name,
@@ -716,6 +737,9 @@
     $("#rail-fire").classList.toggle("active", mode === "fire");
     $("#rail-weather").setAttribute("aria-pressed", String(mode === "weather"));
     $("#rail-fire").setAttribute("aria-pressed", String(mode === "fire"));
+    els.weatherCard.hidden = mode !== "weather";
+    els.fireImageCard.hidden = mode !== "fire";
+    if (mode === "fire") renderFireImage();
     if (state.map) setTimeout(() => state.map.invalidateSize(), 100);
     updateDateControls();
     renderAll();
