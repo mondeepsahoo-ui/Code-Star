@@ -51,7 +51,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .brand-copy { display: grid; line-height: 1.25; gap: 4px; }
 .brand-copy strong { font: 700 14px var(--display); letter-spacing: .14em; }
 .brand-copy small { color: var(--muted); font: 9px var(--mono); letter-spacing: .11em; }
-.location-control { position: relative; display: flex; align-items: center; gap: 10px; min-width: 235px; flex: 1 1 300px; max-width: 430px; }
+.location-control { position: relative; display: flex; align-items: center; gap: 10px; min-width: 235px; flex: 0 1 430px; max-width: 430px; }
 .field-label, .eyebrow { color: var(--muted); font: 10px var(--mono); letter-spacing: .12em; }
 .location-control > .field-label { white-space: nowrap; }
 .search-wrap { position: relative; display: flex; align-items: center; height: 38px; min-width: 0; width: 100%; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 6px; background: rgba(255,255,255,.025); }
@@ -70,10 +70,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .date-control { display: grid; gap: 5px; flex: 0 0 auto; }
 .date-input-wrap { display: flex; align-items: center; gap: 8px; }
 .date-input-wrap .icon-button { width: 29px; height: 29px; font-size: 20px; }
-.date-label { position: relative; min-width: 124px; color: var(--text); font: 12px var(--mono); text-align: center; }
-.date-label span { display: block; }
-.date-label input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
-.topbar-right { display: flex; align-items: center; gap: 18px; margin-left: auto; }
+.date-label { position: relative; display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 124px; min-height: 32px; padding: 4px 8px; border: 1px solid transparent; border-radius: 6px; color: var(--text); font: 12px var(--mono); text-align: center; cursor: pointer; transition: background .18s ease, border-color .18s ease; }
+.date-label:hover { border-color: var(--line); background: var(--panel-raised); }
+.date-calendar-icon { width: 14px; height: 14px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.4; }
+.date-label input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.topbar-right { display: flex; align-items: center; gap: 18px; }
 .connection-status { display: inline-flex; align-items: center; gap: 7px; color: var(--green); font: 9px var(--mono); letter-spacing: .08em; white-space: nowrap; }
 .connection-status i, .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
 .connection-status.is-demo { color: var(--orange); }
@@ -142,7 +143,7 @@ select { max-width: 160px; padding: 6px 25px 6px 9px; border: 1px solid var(--li
 .legend-dot.selected { border: 1px solid var(--cyan); background: transparent; box-shadow: 0 0 6px var(--cyan); }
 .legend-dot.nearby { border: 1px solid var(--cyan); background: rgba(81,217,237,.25); }
 .side-column { display: grid; gap: 13px; }
-.weather-card, .detail-panel, .nearby-panel { padding: 13px 15px; }
+.weather-card, .fire-image-card, .detail-panel, .nearby-panel { padding: 13px 15px; }
 .compact-heading { min-height: 32px; }
 .source-badge, .count-badge { padding: 4px 7px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font: 8px var(--mono); letter-spacing: .05em; }
 .source-badge { text-decoration: none; }
@@ -162,6 +163,11 @@ select { max-width: 160px; padding: 6px 25px 6px 9px; border: 1px solid var(--li
 .spinner { width: 13px; height: 13px; border: 1.5px solid #28465a; border-top-color: var(--cyan); border-radius: 50%; animation: spin .8s linear infinite; }
 .weather-error { color: #ff999e; font-size: 10px; }
 .weather-error button { margin-left: 5px; border: 0; background: none; color: var(--cyan); text-decoration: underline; }
+.fire-image-figure { margin: 11px 0 0; }
+.fire-image-figure img { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 4px; background: #e7e7e7; object-fit: cover; }
+.fire-image-figure figcaption { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; color: var(--muted); font-size: 9px; }
+.fire-image-figure figcaption a { flex: 0 0 auto; color: var(--cyan); }
+.fire-image-note { margin: 7px 0 0; color: var(--faint); font-size: 9px; }
 .detail-panel { min-height: 174px; }
 .close-detail { width: 26px; height: 26px; border: 0; font-size: 20px; }
 .empty-detail { min-height: 102px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--muted); text-align: center; }
@@ -253,7 +259,7 @@ select { max-width: 160px; padding: 6px 25px 6px 9px; border: 1px solid var(--li
   .topbar-right { margin-left: 0; }
   .workspace-grid { grid-template-columns: 1fr; }
   .side-column { grid-template-columns: repeat(2, minmax(0,1fr)); align-items: start; }
-  .weather-card { grid-column: 1; }
+  .weather-card, .fire-image-card { grid-column: 1; }
   .detail-panel { grid-column: 2; grid-row: 1 / span 2; }
   .nearby-panel { grid-column: 1; }
   .map-canvas { height: 48vh; }
@@ -290,8 +296,8 @@ select { max-width: 160px; padding: 6px 25px 6px 9px; border: 1px solid var(--li
   .map-footer { align-items: start; flex-direction: column; padding: 8px 11px; }
   .legend { gap: 9px; }
   .side-column { grid-template-columns: 1fr; }
-  .weather-card, .detail-panel, .nearby-panel { grid-column: 1; grid-row: auto; }
-  .weather-card { order: 1; }
+  .weather-card, .fire-image-card, .detail-panel, .nearby-panel { grid-column: 1; grid-row: auto; }
+  .weather-card, .fire-image-card { order: 1; }
   .detail-panel { order: 2; }
   .nearby-panel { order: 3; }
   .disclaimer { flex-direction: column; gap: 5px; line-height: 1.5; }
@@ -309,10 +315,13 @@ body {
 
 .app-shell { max-width: 1920px; }
 .topbar {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
   position: relative;
   z-index: 1100;
   min-height: 68px;
-  gap: 25px;
+  justify-content: space-between;
+  gap: 20px;
   padding: 0 17px;
   border: 1px solid #d5d5d5;
   border-top: 0;
@@ -434,7 +443,7 @@ select:focus-visible { outline-color: #946051; }
 .legend-dot.nearby { border-color: #946051; background: #f0dfda; }
 
 .side-column { gap: 10px; }
-.weather-card, .detail-panel, .nearby-panel { padding: 12px 14px; }
+.weather-card, .fire-image-card, .detail-panel, .nearby-panel { padding: 12px 14px; }
 .source-badge, .count-badge {
   border-color: #d5d5d5;
   border-radius: 12px;
@@ -449,6 +458,9 @@ select:focus-visible { outline-color: #946051; }
 .weather-stat span { color: #666; }
 .weather-stat strong { color: #292929; }
 .weather-note { color: #666; }
+.fire-image-figure figcaption { color: #666; }
+.fire-image-figure figcaption a { color: #70483c; }
+.fire-image-note { color: #666; }
 .weather-loading { color: #555; }
 .spinner { border-color: #e2d9d4; border-top-color: #946051; }
 .weather-error { color: #9c252d; }
@@ -646,7 +658,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .location-summary-note { margin: 8px 0 0; color: #5d5d5d; font-size: 10px; }
 .location-coordinates { margin: 8px 0 0; color: #4d4d4d; font: 10px var(--mono); }
 .nearby-panel[hidden] { display: none; }
-.date-label input:focus-visible { outline: 2px solid #946051; outline-offset: 3px; }
+.date-label:focus-within { outline: 2px solid #946051; outline-offset: 3px; }
 
 @media (max-width: 1120px) and (min-width: 901px) {
   .workspace-grid { grid-template-columns: minmax(0, 1fr) 310px 58px; gap: 10px; }
